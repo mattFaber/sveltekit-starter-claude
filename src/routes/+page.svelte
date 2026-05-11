@@ -63,11 +63,5 @@
 			<BodyInspector />
 		</aside>
 	{/if}
-
-	{#if simulation.gpuError}
-		<div role="alert" class="absolute inset-0 flex items-center justify-center bg-black text-white p-8 text-center z-50">
-			<p><strong>WebGPU unavailable:</strong> {simulation.gpuError}</p>
-		</div>
-	{/if}
 </main>
 

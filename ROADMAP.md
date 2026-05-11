@@ -8,7 +8,7 @@ UI is built with **Atomic Design** (atoms → molecules → organisms → templa
 
 ## Atomic Design Component Hierarchy
 
-```
+```txt
 src/lib/components/
   atoms/                # Primitive, stateless UI elements
     Button/             # Icon + label variants, aria-label required

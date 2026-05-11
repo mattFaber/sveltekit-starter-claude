@@ -1,29 +1,21 @@
 <script lang="ts">
 	/**
-	 * BodyCountControl — molecule combining a Slider + NumberInput
-	 * for setting the maximum body count, with an aria-live announcement.
+	 * BodyCountControl — Slider + NumberInput for setting the maximum body count.
+	 * Uses a single bindable prop; both inputs write directly to it.
 	 */
 	import Slider from '$lib/components/atoms/Slider.svelte';
 	import NumberInput from '$lib/components/atoms/NumberInput.svelte';
 
 	const MIN = 1;
-	const MAX = 16384;
+	const MAX = 2048;  // practical interactive limit for the slider
 
 	let {
-		value = $bindable(5),
+		value = $bindable(512),
 	}: {
 		value?: number;
 	} = $props();
 
-	// Keep slider and number input in sync
-	let sliderValue  = $state(value);
-	let numberValue  = $state(value);
-
-	$effect(() => { sliderValue = value; numberValue = value; });
-	$effect(() => { value = sliderValue; });
-	$effect(() => { value = numberValue; });
-
-	const announced = $derived(`${value} bodies`);
+	const announced = $derived(`Max bodies: ${value}`);
 </script>
 
 <div class="space-y-1">
@@ -33,16 +25,16 @@
 		min={MIN}
 		max={MAX}
 		step={1}
-		bind:value={sliderValue}
+		bind:value
 		formatValue={(v) => String(Math.round(v))}
 	/>
 	<NumberInput
 		id="body-count-input"
-		label=""
+		label="Exact limit"
 		min={MIN}
-		max={MAX}
+		max={16384}
 		step={1}
-		bind:value={numberValue}
+		bind:value
 		unit="bodies"
 	/>
 	<div aria-live="polite" aria-atomic="true" class="sr-only">{announced}</div>
