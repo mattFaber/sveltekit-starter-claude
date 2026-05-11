@@ -68,7 +68,7 @@ fn main(
 ) -> VertexOut {
   let pv     = posVel[instance_idx];
   let prop   = props[instance_idx];
-  let active = prop.w;
+  let isActive = prop.w;
 
   let world_pos = vec2<f32>(pv.x, pv.y);
   let radius_au = prop.y;
@@ -83,7 +83,7 @@ fn main(
   var out : VertexOut;
   out.position = camera.viewProj * vec4<f32>(final_world, 0.0, 1.0);
   // Hide inactive bodies by pushing them to w=0 (degenerate clip-space)
-  if active < 0.5 {
+  if isActive < 0.5 {
     out.position = vec4<f32>(0.0, 0.0, 0.0, 0.0);
   }
   out.uv     = corner;
