@@ -140,6 +140,11 @@ export class NBodyCompute {
 		return this.posVelBuf[this.pingPong];
 	}
 
+	/** The props buffer (mass, radius, type, active) — read by particle renderer. */
+	get propsBuffer(): GPUBuffer {
+		return this.propsBuf;
+	}
+
 	get bodyCount(): number {
 		return this.nBodies;
 	}

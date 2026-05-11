@@ -54,14 +54,14 @@ Canvas: `role="application"`, `aria-label="2D gravity simulation"`, `tabindex="0
 
 **Goal:** WebGPU initialized, bodies in GPU buffers, forces computed, Leapfrog integration running. Verify with a 2-body Kepler orbit.
 
-- [ ] 1. Install `@webgpu/types` for TypeScript definitions
-- [ ] 2. `src/lib/simulation/engine/WebGPUDevice.ts` — async init, `navigator.gpu` guard, graceful fallback
-- [ ] 3. `src/lib/simulation/physics/units.ts` — SI ↔ sim units (G = 4π² in AU³/M☉/yr²)
-- [ ] 4. `src/lib/simulation/physics/bodies.ts` — `BodyData` interface, `BodyType` enum
-- [ ] 5. `src/lib/simulation/compute/NBodyCompute.ts` — ping-pong buffers, compute pipeline
-- [ ] 6. `src/lib/simulation/compute/nbody.wgsl` — tiled all-pairs shader, Leapfrog integration
-- [ ] 7. `src/lib/simulation/engine/NBodyEngine.ts` — `step(dt)`, `render()`, `destroy()`
-- [ ] 8. **Verify**: 2-body Kepler orbit unit test
+- [x] 1. Install `@webgpu/types` for TypeScript definitions
+- [x] 2. `src/lib/simulation/engine/WebGPUDevice.ts` — async init, `navigator.gpu` guard, graceful fallback
+- [x] 3. `src/lib/simulation/physics/units.ts` — SI ↔ sim units (G = 4π² in AU³/M☉/yr²)
+- [x] 4. `src/lib/simulation/physics/bodies.ts` — `BodyData` interface, `BodyType` enum
+- [x] 5. `src/lib/simulation/compute/NBodyCompute.ts` — ping-pong buffers, compute pipeline
+- [x] 6. `src/lib/simulation/compute/nbody.wgsl` — tiled all-pairs shader, Leapfrog integration
+- [x] 7. `src/lib/simulation/engine/NBodyEngine.ts` — `step(dt)`, `render()`, `destroy()`
+- [x] 8. **Verify**: 2-body Kepler orbit unit test — 15/15 passing
 
 *Steps 2–5 can run in parallel.*
 
