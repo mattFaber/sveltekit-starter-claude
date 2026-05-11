@@ -40,7 +40,12 @@ export class NBodyEngine {
 
 		await this.particles.init();
 		await this.bloom.init(this.swapChainFormat);
-		await this.trails.init('rgba16float');
+		try {
+			await this.trails.init('rgba16float');
+		} catch (e) {
+			// Trail renderer failing must not break the main simulation
+			console.warn('TrailRenderer disabled:', e);
+		}
 
 		this.particles.bindBodyBuffers(this.compute.outputBuffer, this.compute.propsBuffer);
 		this.initialized = true;
