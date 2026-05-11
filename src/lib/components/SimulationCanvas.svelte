@@ -5,6 +5,7 @@
 	import { Camera } from '$lib/simulation/viewport/Camera.js';
 	import { buildControls } from '$lib/simulation/viewport/controls.js';
 	import { BodyType, type BodyData } from '$lib/simulation/physics/bodies.js';
+	import { eulerStep, render2D, MAX_CPU_BODIES } from '$lib/simulation/fallback/canvas2d.js';
 	import { simulation } from '$lib/stores/simulation.svelte.js';
 
 	// ---------------------------------------------------------------------------
@@ -22,6 +23,9 @@
 	// ---------------------------------------------------------------------------
 	let canvas = $state<HTMLCanvasElement | null>(null);
 	let statusMessage = $state('Initializing WebGPU…');
+	/** Canvas2D fallback body state — only non-null when GPU unavailable */
+	let fallbackBodies = $state<BodyData[] | null>(null);
+	let fallbackCanvas = $state<HTMLCanvasElement | null>(null);
 
 	// ---------------------------------------------------------------------------
 	// Camera + controls
@@ -38,23 +42,39 @@
 	// ---------------------------------------------------------------------------
 	let engine: NBodyEngine | null = null;
 
-	/** Add a body to the running simulation. */
+	/** Add a body to the running simulation (respects maxBodies limit). */
 	export function spawnBody(body: BodyData): void {
-		if (!engine) return;
-		const next: BodyData[] = [...simulation.bodies, body];
-		engine.loadBodies(next);
-		simulation.bodies = next;
-		simulation.bodyCount = engine.bodyCount;
+		if (simulation.bodyCount >= simulation.maxBodies) return;
+		if (engine) {
+			const next: BodyData[] = [...simulation.bodies, body];
+			engine.loadBodies(next);
+			simulation.bodies    = next;
+			simulation.bodyCount = engine.bodyCount;
+		} else if (fallbackBodies) {
+			// Canvas2D fallback path
+			if (fallbackBodies.length < MAX_CPU_BODIES) {
+				fallbackBodies = [...fallbackBodies, body];
+				simulation.bodies    = fallbackBodies;
+				simulation.bodyCount = fallbackBodies.filter((b) => b.active).length;
+			}
+		}
 		onSpawnBody?.(body);
 	}
 
 	/** Load a completely new set of bodies (used by preset loader). */
 	export function loadPreset(bodies: BodyData[]): void {
-		if (!engine) return;
-		engine.loadBodies(bodies);
-		simulation.bodies    = bodies;
-		simulation.bodyCount = engine.bodyCount;
-		simulation.simYears  = 0;
+		if (engine) {
+			engine.loadBodies(bodies);
+			simulation.bodies    = bodies;
+			simulation.bodyCount = engine.bodyCount;
+			simulation.simYears  = 0;
+		} else if (fallbackBodies !== null) {
+			// Canvas2D fallback path
+			fallbackBodies       = bodies.slice(0, MAX_CPU_BODIES);
+			simulation.bodies    = fallbackBodies;
+			simulation.bodyCount = fallbackBodies.filter((b) => b.active).length;
+			simulation.simYears  = 0;
+		}
 	}
 
 	// ---------------------------------------------------------------------------
@@ -75,7 +95,75 @@
 			const result = await initWebGPU();
 			if (!isWebGPUAvailable(result)) {
 				simulation.gpuError = result.reason;
-				statusMessage = result.reason;
+				statusMessage = '';  // clear spinner, show fallback UI
+
+				// Start Canvas2D fallback
+				const initial = defaultBodies().slice(0, MAX_CPU_BODIES);
+				fallbackBodies       = initial;
+				simulation.bodies    = initial;
+				simulation.bodyCount = initial.filter((b) => b.active).length;
+
+				let fbSimYears = 0;
+
+				function fallbackLoop(time: number) {
+					if (destroyed) return;
+					rafId = requestAnimationFrame(fallbackLoop);
+
+					const elapsed = Math.min((time - lastTime) / 1000, 0.05);
+					lastTime = time;
+
+					frameCount++;
+					fpsTimer += elapsed;
+					if (fpsTimer >= 1) {
+						simulation.fps = Math.round(frameCount / fpsTimer);
+						frameCount = 0;
+						fpsTimer   = 0;
+					}
+
+					if (!simulation.paused && fallbackBodies) {
+						const dtYr = DT_YEAR * simulation.timeScale;
+						eulerStep(fallbackBodies, dtYr);
+						fbSimYears += dtYr;
+						simulation.simYears  = fbSimYears;
+						simulation.bodyCount = fallbackBodies.filter((b) => b.active).length;
+					}
+
+					if (fallbackCanvas && fallbackBodies) {
+						const ctx2d = fallbackCanvas.getContext('2d');
+						if (ctx2d) {
+							const cs    = camera.state;
+							const cx    = fallbackCanvas.width  / 2 - cs.centerX * cs.pixelsPerAU;
+							const cy    = fallbackCanvas.height / 2 + cs.centerY * cs.pixelsPerAU;
+							render2D(ctx2d, fallbackBodies, cs.pixelsPerAU, cx, cy);
+						}
+					}
+				}
+
+				lastTime = performance.now();
+				rafId = requestAnimationFrame(fallbackLoop);
+
+				// Size the 2D canvas to fill its container
+				// fallbackCanvas is bound reactively, so we wait one tick
+				const sizeCanvas = () => {
+					if (!fallbackCanvas) return;
+					const rect = fallbackCanvas.getBoundingClientRect();
+					fallbackCanvas.width  = Math.round(rect.width  * devicePixelRatio);
+					fallbackCanvas.height = Math.round(rect.height * devicePixelRatio);
+					camera.setViewport(fallbackCanvas.width, fallbackCanvas.height);
+				};
+				// Use a short timeout to let Svelte render the fallback canvas
+				setTimeout(sizeCanvas, 0);
+
+				const fbRo = new ResizeObserver((entries) => {
+					if (destroyed || !fallbackCanvas) return;
+					const entry = entries[0];
+					fallbackCanvas.width  = Math.round(entry.contentRect.width  * devicePixelRatio);
+					fallbackCanvas.height = Math.round(entry.contentRect.height * devicePixelRatio);
+					camera.setViewport(fallbackCanvas.width, fallbackCanvas.height);
+				});
+				// Observe the parent element (not the canvas itself, which doesn't exist yet)
+				if (canvas) fbRo.observe(canvas.parentElement ?? canvas);
+
 				return;
 			}
 
@@ -129,13 +217,16 @@
 					fpsTimer   = 0;
 				}
 
+					// Sync trail toggle from store
+				if (engine) engine.trailsEnabled = simulation.trailsEnabled;
+
 				if (!simulation.paused && engine) {
-					engine.step(DT_YEAR * simulation.timeScale);
+					engine.step(DT_YEAR * simulation.timeScale, simulation.bodies);
 					simulation.simYears = engine.simulationTime;
 				}
 
 				if (engine && context) {
-					engine.render(context, camera);
+					engine.render(context, camera, simulation.bodies);
 				}
 			}
 
@@ -173,24 +264,22 @@
 	}
 </script>
 
-<!-- Status overlay when GPU is unavailable or still loading -->
+<!-- Status overlay: loading spinner -->
 {#if statusMessage}
 	<div
 		class="absolute inset-0 flex items-center justify-center bg-black/90 text-white text-sm px-4 text-center"
 		role="status"
 		aria-live="polite"
 	>
-		{#if simulation.gpuError}
-			<p><strong>WebGPU not available</strong><br />{statusMessage}</p>
-		{:else}
-			<p>{statusMessage}</p>
-		{/if}
+		<p>{statusMessage}</p>
 	</div>
 {/if}
 
+<!-- WebGPU canvas (primary) — hidden when in fallback mode -->
 <canvas
 	bind:this={canvas}
 	class="w-full h-full block"
+	class:hidden={!!simulation.gpuError}
 	aria-label="2D gravity simulation — drag to pan, scroll to zoom, arrow keys to navigate"
 	tabindex="0"
 	onpointerdown={controls.onpointerdown}
@@ -199,6 +288,25 @@
 	onwheel={controls.onwheel}
 	onkeydown={controls.onkeydown}
 ></canvas>
+
+<!-- Canvas2D fallback — shown when WebGPU is unavailable -->
+{#if simulation.gpuError}
+	<div class="absolute top-0 left-0 right-0 flex items-center justify-center
+	            py-1 bg-yellow-900/80 text-yellow-200 text-xs font-mono z-10">
+		Canvas 2D mode (WebGPU unavailable — max {MAX_CPU_BODIES} bodies)
+	</div>
+	<canvas
+		bind:this={fallbackCanvas}
+		class="w-full h-full block"
+		aria-label="2D gravity simulation — Canvas 2D fallback mode"
+		tabindex="0"
+		onpointerdown={controls.onpointerdown}
+		onpointermove={controls.onpointermove}
+		onpointerup={controls.onpointerup}
+		onwheel={controls.onwheel}
+		onkeydown={controls.onkeydown}
+	></canvas>
+{/if}
 
 <style>
 	canvas {

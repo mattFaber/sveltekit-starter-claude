@@ -117,10 +117,10 @@ Canvas: `role="application"`, `aria-label="2D gravity simulation"`, `tabindex="0
 
 **Goal:** Trails, adaptive timestep, performance guardrails.
 
-- [ ] 28. Trail ring buffer — opt-in GPU trails, `Toggle` atom in HUD
-- [ ] 29. Adaptive timestep — per-body min-safe-dt, 1 float GPU readback/frame
-- [ ] 30. Body count control — `Slider` + `NumberInput` molecule with `aria-live` announcement
-- [ ] 31. Canvas2D + Web Worker fallback — Euler integration, all UI controls remain functional
+- [x] 28. Trail ring buffer — opt-in GPU trails, `Toggle` atom in HUD
+- [x] 29. Adaptive timestep — per-body min-safe-dt, Courant-condition smoothed EMA
+- [x] 30. Body count control — `Slider` + `NumberInput` molecule with `aria-live` announcement
+- [x] 31. Canvas2D + Web Worker fallback — Euler integration, all UI controls remain functional
 
 ---
 

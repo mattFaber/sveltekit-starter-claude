@@ -3,8 +3,10 @@
 	import NumberInput from '$lib/components/atoms/NumberInput.svelte';
 	import BodyTypeSelector from '$lib/components/molecules/BodyTypeSelector.svelte';
 	import VelocityControl from '$lib/components/molecules/VelocityControl.svelte';
+	import BodyCountControl from '$lib/components/molecules/BodyCountControl.svelte';
 	import { BodyType, type BodyData } from '$lib/simulation/physics/bodies.js';
 	import { units } from '$lib/simulation/physics/units.js';
+	import { simulation } from '$lib/stores/simulation.svelte.js';
 
 	let { onSpawn }: { onSpawn: (body: BodyData) => void } = $props();
 
@@ -17,13 +19,15 @@
 	let vx       = $state(0.0);
 	let vy       = $state(6.28);   // ~Earth circular speed AU/yr
 
-	// Helpers
 	const circularSpeed = $derived(
 		x !== 0 ? units.circularOrbitSpeed(1.0, Math.abs(x)).toFixed(2) : '—'
 	);
 
+	const atLimit = $derived(simulation.bodyCount >= simulation.maxBodies);
+
 	function handleSubmit(e: SubmitEvent) {
 		e.preventDefault();
+		if (atLimit) return;
 		onSpawn({ x, y, vx, vy, mass, radius, type: bodyType, active: 1 });
 	}
 
@@ -35,6 +39,12 @@
 
 <section aria-labelledby="spawn-heading" class="p-3 space-y-3 text-white">
 	<h2 id="spawn-heading" class="text-sm font-mono text-white/80 font-semibold">Spawn Body</h2>
+
+	<!-- Max body count control -->
+	<fieldset class="border border-white/10 rounded p-3">
+		<legend class="text-xs text-white/50 font-mono px-1">Body Limit</legend>
+		<BodyCountControl bind:value={simulation.maxBodies} />
+	</fieldset>
 
 	<form onsubmit={handleSubmit} class="space-y-3" novalidate>
 		<BodyTypeSelector bind:value={bodyType} />
@@ -48,7 +58,6 @@
 
 		<VelocityControl bind:vx bind:vy />
 
-		<!-- Quick-fill circular orbit velocity -->
 		<Button variant="ghost" size="sm" type="button" onclick={applyCircularVelocity}>
 			↺ Circular orbit speed ({circularSpeed} AU/yr)
 		</Button>
@@ -60,8 +69,8 @@
 			<NumberInput id="spawn-radius" label="Radius" bind:value={radius} step={1e-4} unit="AU" />
 		</fieldset>
 
-		<Button type="submit" variant="primary">
-			+ Spawn
+		<Button type="submit" variant="primary" disabled={atLimit}>
+			{atLimit ? `Limit reached (${simulation.maxBodies})` : '+ Spawn'}
 		</Button>
 	</form>
 </section>

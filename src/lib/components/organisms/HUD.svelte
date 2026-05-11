@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Badge from '$lib/components/atoms/Badge.svelte';
+	import Toggle from '$lib/components/atoms/Toggle.svelte';
 	import { simulation } from '$lib/stores/simulation.svelte.js';
 </script>
 
@@ -12,15 +13,23 @@
 	aria-label="Simulation metrics"
 >
 	<Badge label="FPS " value={simulation.fps} color={simulation.fps < 30 ? 'red' : 'green'} />
-	<Badge label="Bodies " value={simulation.bodyCount} color="yellow" />
+	<Badge label="Bodies " value="{simulation.bodyCount}/{simulation.maxBodies}" color="yellow" />
 	<Badge label="Time " value="{simulation.simYears.toFixed(2)} yr" />
+
+	<div class="ml-auto flex items-center gap-3">
+		<Toggle
+			id="hud-trails"
+			label="Trails"
+			bind:checked={simulation.trailsEnabled}
+		/>
+	</div>
 
 	{#if simulation.paused}
 		<span class="text-yellow-400 animate-pulse" aria-hidden="true">⏸ PAUSED</span>
 	{/if}
 </div>
 
-<!-- Screen-reader live region (outside the visual HUD so it's always announced) -->
+<!-- Screen-reader live region -->
 <div aria-live="polite" aria-atomic="true" class="sr-only">
 	{#if simulation.paused}
 		Simulation paused. {simulation.bodyCount} bodies.
