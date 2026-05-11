@@ -20,17 +20,17 @@ struct CameraUniforms {
   viewProj : mat4x4<f32>,
   // Pixels per AU — used to convert body radius (AU) → screen pixels
   pixelsPerAU : f32,
-  _pad0 : f32,
-  _pad1 : f32,
-  _pad2 : f32,
-};
+  pad0 : f32,
+  pad1 : f32,
+  pad2 : f32,
+}
 
 struct VertexOut {
   @builtin(position) position : vec4<f32>,
   @location(0) uv     : vec2<f32>,
   @location(1) color  : vec4<f32>,
   @location(2) radius : f32,
-};
+}
 
 // Body position+velocity buffer (output of compute pass, read directly here)
 @group(0) @binding(0) var<storage, read> posVel : array<vec4<f32>>;

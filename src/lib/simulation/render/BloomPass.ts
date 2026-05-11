@@ -11,7 +11,7 @@ const THRESHOLD_SHADER = /* wgsl */`
 @group(0) @binding(1) var srcSamp : sampler;
 @group(0) @binding(2) var<uniform> threshold : f32;
 
-struct VertOut { @builtin(position) pos : vec4<f32>, @location(0) uv : vec2<f32> };
+struct VertOut { @builtin(position) pos : vec4<f32>, @location(0) uv : vec2<f32> }
 
 @vertex
 fn vs(@builtin(vertex_index) vi : u32) -> VertOut {
@@ -38,7 +38,7 @@ const BLUR_SHADER = /* wgsl */`
 @group(0) @binding(1) var srcSamp : sampler;
 @group(0) @binding(2) var<uniform> dir : vec2<f32>; // (1,0) or (0,1)
 
-struct VertOut { @builtin(position) pos : vec4<f32>, @location(0) uv : vec2<f32> };
+struct VertOut { @builtin(position) pos : vec4<f32>, @location(0) uv : vec2<f32> }
 
 @vertex
 fn vs(@builtin(vertex_index) vi : u32) -> VertOut {
@@ -75,12 +75,14 @@ fn fs(in : VertOut) -> @location(0) vec4<f32> {
 `;
 
 const COMPOSITE_SHADER = /* wgsl */`
+struct CompositeParams { strength : f32, exposure : f32, pad0 : f32, pad1 : f32 }
+
 @group(0) @binding(0) var hdr      : texture_2d<f32>;
 @group(0) @binding(1) var bloom    : texture_2d<f32>;
 @group(0) @binding(2) var samp     : sampler;
-@group(0) @binding(3) var<uniform> params : vec2<f32>; // x=bloomStrength, y=exposure
+@group(0) @binding(3) var<uniform> params : CompositeParams;
 
-struct VertOut { @builtin(position) pos : vec4<f32>, @location(0) uv : vec2<f32> };
+struct VertOut { @builtin(position) pos : vec4<f32>, @location(0) uv : vec2<f32> }
 
 @vertex
 fn vs(@builtin(vertex_index) vi : u32) -> VertOut {
@@ -106,8 +108,8 @@ fn aces(x : vec3<f32>) -> vec3<f32> {
 fn fs(in : VertOut) -> @location(0) vec4<f32> {
   let hdrCol   = textureSample(hdr,   samp, in.uv).rgb;
   let bloomCol = textureSample(bloom, samp, in.uv).rgb;
-  let exposure = params.y;
-  let strength = params.x;
+  let exposure = params.exposure;
+  let strength = params.strength;
   let combined = hdrCol + bloomCol * strength;
   let tonemapped = aces(combined * exposure);
   // sRGB gamma correction
@@ -159,7 +161,7 @@ export class BloomPass {
       size: 8, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
     this.compositeBuf = device.createBuffer({
-      size: 8, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+      size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
     // Upload static blur direction vectors
@@ -189,11 +191,13 @@ export class BloomPass {
 
     const makeFullscreenPipeline = (
       code: string,
+      label: string,
       format: GPUTextureFormat,
       bgl: GPUBindGroupLayout,
     ): GPURenderPipeline => {
-      const mod = device.createShaderModule({ code });
+      const mod = device.createShaderModule({ label, code });
       return device.createRenderPipeline({
+        label,
         layout: device.createPipelineLayout({ bindGroupLayouts: [bgl] }),
         vertex:   { module: mod, entryPoint: 'vs' },
         fragment: { module: mod, entryPoint: 'fs', targets: [{ format }] },
@@ -201,9 +205,9 @@ export class BloomPass {
       });
     };
 
-    this.thresholdPipeline  = makeFullscreenPipeline(THRESHOLD_SHADER,  'rgba16float', texBGL(0));
-    this.blurPipeline       = makeFullscreenPipeline(BLUR_SHADER,       'rgba16float', texBGL(1));
-    this.compositePipeline  = makeFullscreenPipeline(COMPOSITE_SHADER,  swapChainFormat, compositeBGL);
+    this.thresholdPipeline  = makeFullscreenPipeline(THRESHOLD_SHADER,  'bloom-threshold',  'rgba16float',    texBGL(0));
+    this.blurPipeline       = makeFullscreenPipeline(BLUR_SHADER,       'bloom-blur',       'rgba16float',    texBGL(1));
+    this.compositePipeline  = makeFullscreenPipeline(COMPOSITE_SHADER,  'bloom-composite',  swapChainFormat, compositeBGL);
   }
 
   resize(width: number, height: number): void {
@@ -247,7 +251,7 @@ export class BloomPass {
 
     // Update dynamic uniforms
     device.queue.writeBuffer(this.thresholdBuf, 0, new Float32Array([this.threshold]));
-    device.queue.writeBuffer(this.compositeBuf, 0, new Float32Array([this.bloomStrength, this.exposure]));
+    device.queue.writeBuffer(this.compositeBuf, 0, new Float32Array([this.bloomStrength, this.exposure, 0, 0]));
 
     const hdrView    = hdrTexture.createView();
     const brightView = this.brightTex.createView();

@@ -31,8 +31,17 @@ export class ParticleRenderer {
   /** Build the render pipeline. Call once after construction. */
   async init(): Promise<void> {
     const { device } = this;
-    const vertMod = device.createShaderModule({ code: PARTICLE_VERT_SHADER });
-    const fragMod = device.createShaderModule({ code: PARTICLE_FRAG_SHADER });
+    const vertMod = device.createShaderModule({ label: 'particle-vert', code: PARTICLE_VERT_SHADER });
+    const fragMod = device.createShaderModule({ label: 'particle-frag', code: PARTICLE_FRAG_SHADER });
+
+    for (const [label, mod] of [['particle-vert', vertMod], ['particle-frag', fragMod]] as const) {
+      const info = await mod.getCompilationInfo();
+      for (const msg of info.messages) {
+        if (msg.type === 'error') {
+          throw new Error(`${label} WGSL [${msg.lineNum}:${msg.linePos}]: ${msg.message}`);
+        }
+      }
+    }
 
     // Body data bind group layout (group 0)
     const bodyBGL = device.createBindGroupLayout({
