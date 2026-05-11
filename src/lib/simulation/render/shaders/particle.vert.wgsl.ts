@@ -72,8 +72,11 @@ fn main(
 
   let world_pos = vec2<f32>(pv.x, pv.y);
   let radius_au = prop.y;
-  // Minimum screen radius so even tiny bodies are visible
-  let radius_px = max(radius_au * camera.pixelsPerAU, 2.0);
+  let body_type = prop.z;
+  // Minimum screen radius by body type so bodies are always visible
+  // STAR=0 → 8px, BLACK_HOLE=3 → 6px, others → 4px
+  let min_r = select(select(4.0, 8.0, body_type < 0.5), 6.0, body_type > 2.5);
+  let radius_px = max(radius_au * camera.pixelsPerAU, min_r);
 
   let corner = QUAD_POS[vertex_idx];
   // Convert corner offset from pixels to world units, then apply to world pos

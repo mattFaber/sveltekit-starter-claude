@@ -55,6 +55,14 @@ const BODY_COLORS: BodyTypeColors = {
   3: '#cc2222', // BLACK_HOLE
 };
 
+/** Minimum screen radius per body type (px) — ensures bodies are always visible. */
+const MIN_RADIUS: Record<number, number> = {
+  0: 8,  // STAR
+  1: 4,  // PLANET
+  2: 3,  // ASTEROID
+  3: 6,  // BLACK_HOLE
+};
+
 /**
  * Render bodies onto a 2D canvas context.
  *
@@ -80,14 +88,16 @@ export function render2D(
 
     const sx = originX + b.x * pixPerAU;
     const sy = originY - b.y * pixPerAU; // y-axis flip for screen coords
-    const r  = Math.max(2, b.radius * pixPerAU);
+    const minR = MIN_RADIUS[b.type] ?? 3;
+    const r  = Math.max(minR, b.radius * pixPerAU);
 
     ctx.beginPath();
     ctx.arc(sx, sy, r, 0, Math.PI * 2);
 
     const color = BODY_COLORS[b.type] ?? '#ffffff';
-    const grad  = ctx.createRadialGradient(sx, sy, 0, sx, sy, r * 2);
+    const grad  = ctx.createRadialGradient(sx, sy, 0, sx, sy, r * 3);
     grad.addColorStop(0, color);
+    grad.addColorStop(0.4, color);
     grad.addColorStop(1, 'transparent');
     ctx.fillStyle = grad;
     ctx.fill();

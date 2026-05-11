@@ -92,6 +92,7 @@
 		const DT_YEAR = 1 / 365.25;
 
 		async function start() {
+			statusMessage = 'Requesting GPU adapter…';
 			const result = await initWebGPU();
 			if (!isWebGPUAvailable(result)) {
 				simulation.gpuError = result.reason;
@@ -168,6 +169,7 @@
 			}
 
 			engine = new NBodyEngine(result.device);
+			statusMessage = 'Initializing render pipeline…';
 
 			const context = canvas!.getContext('webgpu') as GPUCanvasContext | null;
 			if (!context) {
@@ -176,6 +178,7 @@
 				return;
 			}
 
+			statusMessage = 'Compiling shaders…';
 			await engine.initRender(context);
 
 			const { width, height } = canvas!.getBoundingClientRect();
@@ -242,11 +245,15 @@
 			};
 		}
 
-		const cleanup = start();
+		const cleanup = start().catch((err: unknown) => {
+			const msg = err instanceof Error ? err.message : String(err);
+			console.error('Simulation init failed:', err);
+			statusMessage = `Init error: ${msg}`;
+		});
 		return () => {
 			destroyed = true;
 			cancelAnimationFrame(rafId);
-			cleanup.then((fn) => fn?.());
+			cleanup.then((fn) => typeof fn === 'function' && fn());
 		};
 	});
 
@@ -291,8 +298,8 @@
 
 <!-- Canvas2D fallback — shown when WebGPU is unavailable -->
 {#if simulation.gpuError}
-	<div class="absolute top-0 left-0 right-0 flex items-center justify-center
-	            py-1 bg-yellow-900/80 text-yellow-200 text-xs font-mono z-10">
+	<div class="absolute top-8 left-0 right-0 flex items-center justify-center
+	            py-1 bg-yellow-900/80 text-yellow-200 text-xs font-mono z-20">
 		Canvas 2D mode (WebGPU unavailable — max {MAX_CPU_BODIES} bodies)
 	</div>
 	<canvas
