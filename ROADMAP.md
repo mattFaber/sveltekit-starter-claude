@@ -71,12 +71,12 @@ Canvas: `role="application"`, `aria-label="2D gravity simulation"`, `tabindex="0
 
 **Goal:** Bodies visible on screen with glow, camera working.
 
-- [ ] 9. `src/lib/simulation/render/shaders/particle.vert.wgsl` — instanced quad, zero-copy from compute buffer
-- [ ] 10. `src/lib/simulation/render/shaders/particle.frag.wgsl` — SDF circle, radial glow, color by body type
-- [ ] 11. `src/lib/simulation/render/ParticleRenderer.ts` — instanced pipeline, HDR offscreen target
-- [ ] 12. `src/lib/simulation/render/BloomPass.ts` — 4-pass: threshold → H blur → V blur → composite
-- [ ] 13. `src/lib/simulation/viewport/Camera.ts` — pan/zoom math, world↔screen transforms
-- [ ] 14. `src/lib/components/SimulationCanvas.svelte` — `$effect` lifecycle, rAF loop, resize observer
+- [x] 9. `src/lib/simulation/render/shaders/particle.vert.wgsl` — instanced quad, zero-copy from compute buffer
+- [x] 10. `src/lib/simulation/render/shaders/particle.frag.wgsl` — SDF circle, radial glow, color by body type
+- [x] 11. `src/lib/simulation/render/ParticleRenderer.ts` — instanced pipeline, HDR offscreen target
+- [x] 12. `src/lib/simulation/render/BloomPass.ts` — 4-pass: threshold → H blur → V blur → composite
+- [x] 13. `src/lib/simulation/viewport/Camera.ts` — pan/zoom math, world↔screen transforms
+- [x] 14. `src/lib/components/SimulationCanvas.svelte` — `$effect` lifecycle, rAF loop, resize observer
 
 *Steps 9–12 can run in parallel. Step 14 depends on 11–13.*
 
