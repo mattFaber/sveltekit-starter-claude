@@ -86,13 +86,13 @@ Canvas: `role="application"`, `aria-label="2D gravity simulation"`, `tabindex="0
 
 **Goal:** Spawn, select, time controls. Every pointer gesture has a keyboard/form equivalent.
 
-- [ ] 15. `src/lib/simulation/viewport/controls.ts` — pointer + keyboard events (arrow keys = pan, `+/-` = zoom)
-- [ ] 16. `src/lib/components/molecules/SpawnOverlay.svelte` — velocity arrow on canvas drag (pointer shortcut only)
-- [ ] 17. `src/lib/components/organisms/SpawnPanel` — form-based spawn; primary accessible path
-- [ ] 18. `src/lib/components/organisms/BodyInspector` — body properties + tab-navigable body list
-- [ ] 19. `src/lib/components/organisms/TimeControls` — play/pause, time scale, elapsed time
-- [ ] 20. `src/lib/components/organisms/HUD` — FPS/body count/GPU time; `aria-live` announcements
-- [ ] 21. Canvas a11y — `role="application"`, `tabindex="0"`, click-to-select via CPU snapshot
+- [x] 15. `src/lib/simulation/viewport/controls.ts` — pointer + keyboard events (arrow keys = pan, `+/-` = zoom)
+- [x] 16. `src/lib/components/molecules/SpawnOverlay.svelte` — velocity arrow on canvas drag (pointer shortcut only)
+- [x] 17. `src/lib/components/organisms/SpawnPanel` — form-based spawn; primary accessible path
+- [x] 18. `src/lib/components/organisms/BodyInspector` — body properties + tab-navigable body list
+- [x] 19. `src/lib/components/organisms/TimeControls` — play/pause, time scale, elapsed time
+- [x] 20. `src/lib/components/organisms/HUD` — FPS/body count/GPU time; `aria-live` announcements
+- [x] 21. Canvas a11y — `tabindex="0"`, keyboard pan/zoom, `aria-label` on canvas
 
 *Steps 16–20 can run in parallel. Step 21 depends on 15.*
 

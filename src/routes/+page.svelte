@@ -4,14 +4,20 @@
 	import TimeControls from '$lib/components/organisms/TimeControls.svelte';
 	import SpawnPanel from '$lib/components/organisms/SpawnPanel.svelte';
 	import BodyInspector from '$lib/components/organisms/BodyInspector.svelte';
+	import PresetMenu from '$lib/components/organisms/PresetMenu.svelte';
 	import { simulation } from '$lib/stores/simulation.svelte.js';
 	import type { BodyData } from '$lib/simulation/physics/bodies.js';
+	import type { Preset } from '$lib/simulation/presets/index.js';
 
 	let canvasRef = $state<ReturnType<typeof SimulationCanvas> | null>(null);
 	let sidebarOpen = $state(true);
 
 	function handleSpawn(body: BodyData) {
 		canvasRef?.spawnBody(body);
+	}
+
+	function handlePreset(preset: Preset) {
+		canvasRef?.loadPreset(preset.build());
 	}
 </script>
 
@@ -50,6 +56,8 @@
 			class="w-64 flex flex-col border-l border-white/10 bg-black/80 backdrop-blur-sm overflow-y-auto shrink-0"
 			aria-label="Controls sidebar"
 		>
+			<PresetMenu onSelect={handlePreset} />
+			<hr class="border-white/10" />
 			<SpawnPanel onSpawn={handleSpawn} />
 			<hr class="border-white/10" />
 			<BodyInspector />

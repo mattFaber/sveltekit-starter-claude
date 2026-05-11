@@ -48,6 +48,15 @@
 		onSpawnBody?.(body);
 	}
 
+	/** Load a completely new set of bodies (used by preset loader). */
+	export function loadPreset(bodies: BodyData[]): void {
+		if (!engine) return;
+		engine.loadBodies(bodies);
+		simulation.bodies    = bodies;
+		simulation.bodyCount = engine.bodyCount;
+		simulation.simYears  = 0;
+	}
+
 	// ---------------------------------------------------------------------------
 	// Engine lifecycle
 	// ---------------------------------------------------------------------------
