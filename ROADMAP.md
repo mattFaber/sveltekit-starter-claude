@@ -102,12 +102,12 @@ Canvas: `role="application"`, `aria-label="2D gravity simulation"`, `tabindex="0
 
 **Goal:** Rich starting scenarios, bodies merge on collision.
 
-- [ ] 22. `src/lib/simulation/physics/merger.ts` — `active=0` merge flag, CPU-side merge logic
-- [ ] 23. `src/lib/simulation/presets/solar-system.ts` — Sun + 8 planets
-- [ ] 24. `src/lib/simulation/presets/binary-stars.ts` — binary star system
-- [ ] 25. `src/lib/simulation/presets/galaxy-collision.ts` — two colliding disk galaxies
-- [ ] 26. `src/lib/simulation/presets/index.ts` — preset registry
-- [ ] 27. `src/lib/components/organisms/PresetMenu` — keyboard-navigable preset grid
+- [x] 22. `src/lib/simulation/physics/merger.ts` — `active=0` merge flag, CPU-side merge logic
+- [x] 23. `src/lib/simulation/presets/solar-system.ts` — Sun + 8 planets
+- [x] 24. `src/lib/simulation/presets/binary-stars.ts` — binary star system
+- [x] 25. `src/lib/simulation/presets/galaxy-collision.ts` — two colliding disk galaxies
+- [x] 26. `src/lib/simulation/presets/index.ts` — preset registry
+- [x] 27. `src/lib/components/organisms/PresetMenu` — keyboard-navigable preset grid
 
 *Steps 23–25 are fully parallel. Step 26 depends on 23–25.*
 
